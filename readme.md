@@ -4,11 +4,13 @@ Create ROS image with:
 ./image_builder/init-ros-box.sh -d noetic -t ./ros_lattedrone -w -e
 ```
 Then, it can be started with `go.sh`.
-
-Once populate the ROS workspace with your desired sources, dependencies can be installed with:
+Once inside the container:
 ```bash
-# inside the docker container
-./catkin_ws/ros_container_setup.sh
+# populate the workspace
+wstool init src lattedrone.rosinstall
+
+# then install dependencies and build
+~/catkin_ws/ros_container_setup.sh
 ```
 
 ## LattePanda setup

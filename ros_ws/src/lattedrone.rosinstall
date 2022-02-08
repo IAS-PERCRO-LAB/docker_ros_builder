@@ -1,0 +1,47 @@
+- git:
+    local-name: control_toolbox
+    uri: https://github.com/ros-controls/control_toolbox.git
+    version: melodic-devel
+- git:
+    local-name: mavlink
+    uri: https://github.com/mavlink/mavlink-gbp-release.git
+    version: release/melodic/mavlink
+- git:
+    local-name: mavros
+    uri: git@github.com:mavlink/mavros.git
+    version: efb53317
+- git:
+    local-name: percro_drone
+    uri: ssh://git@10.30.5.226:30001/drones/percro_drone.git
+    version: develop
+- git:
+    local-name: percro_drone_contest_behaviour
+    uri: ssh://git@10.30.5.226:30001/drones/percro_drone_contest_behaviour.git
+    version: develop
+- git:
+    local-name: percro_drone_contest_msgs
+    uri: ssh://git@10.30.5.226:30001/drones/percro_drone_contest_msgs.git
+    version: develop
+- git:
+    local-name: percro_drone_contest_perception
+    uri: ssh://git@10.30.5.226:30001/drones/percro_drone_contest_perception.git
+    version: develop
+- git:
+    local-name: percro_drone_planning
+    uri: ssh://git@10.30.5.226:30001/drones/percro_drone_planning.git
+    version: precision_landing
+- git:
+    local-name: realsense-ros
+    uri: https://github.com/IntelRealSense/realsense-ros.git
+    version: 2.2.15
+- git:
+    local-name: realtime_tools
+    uri: https://github.com/ros-controls/realtime_tools.git
+    version: noetic-devel
+- git:
+    local-name: vision_to_mavros
+    uri: https://github.com/thien94/vision_to_mavros.git
+    version: master
+- git:
+    local-name: vision_toolbox
+    uri: ssh://git@10.30.5.226:30001/drones/ros_vision_toolbox.git

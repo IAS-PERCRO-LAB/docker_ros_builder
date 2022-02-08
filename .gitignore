@@ -1,2 +1,9 @@
 docker_id
-ros_ws/src
+
+# ignore workspace directory, except 'ros_ws/ros_container_setup.sh' and 'ros_ws/src/lattedrone.rosinstall'
+!ros_ws/
+ros_ws/*
+!ros_ws/ros_container_setup.sh
+!ros_ws/src/
+ros_ws/src/*
+!ros_ws/src/lattedrone.rosinstall

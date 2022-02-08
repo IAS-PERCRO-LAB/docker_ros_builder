@@ -10,5 +10,5 @@ rosdep install --from-paths src --ignore-src -r -y
 # initialise and build the ROS workspace
 catkin init
 catkin config --merge-devel
-catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
 catkin build
