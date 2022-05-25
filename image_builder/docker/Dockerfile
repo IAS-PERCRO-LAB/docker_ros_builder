@@ -39,7 +39,8 @@ COPY bashrc /home/${real_username}/.bashrc
 COPY bashrc /root/.bashrc
 COPY bash_profile /home/${real_username}/.bash_profile
 COPY bash_profile /root/.bash_profile
-RUN chown ${real_username}:${real_username} /home/${real_username}/.bash*
+COPY ros_container_setup.sh /home/${real_username}/ros_container_setup.sh
+RUN chown ${real_username}:${real_username} /home/${real_username}/.bash* /home/${real_username}/ros_container_setup.sh
 USER ${real_username}
 ENV HOME /home/${real_username}
 RUN echo "source /opt/ros/${ros_distro}/setup.bash" >> /home/${real_username}/.bashrc && \

@@ -1,20 +1,21 @@
 # ROS LatteDrone
 Create ROS image with:
 ```bash
-./image_builder/init-ros-box.sh -d noetic -t ./ros_lattedrone -w -e
-```
-Then, it can be started with `go.sh`.
-Once inside the container:
-```bash
-# populate the workspace
-wstool init src lattedrone.rosinstall
+./image_builder/init-ros-box.sh -d noetic -n percro -t ./ros_lattedrone -w -e
 
-# then install dependencies and build
-~/catkin_ws/ros_container_setup.sh
+# then copy source files inside the shared directory (needed to install dependencies)
+cp -r YOUR_SRC_PATH ./ros_lattedrone/ros_ws/src/.
 ```
+
+Then, start the container with `go.sh`. Once inside:
+```bash
+~/ros_container_setup.sh
+```
+Dependencies should be installed and the workspace should be compiled succesfully.
+Now you can use `./scripts/upload_ws.sh` to build and uploading your entire workspace to LattePanda (just remember to set `SOURCE_WS_PATH` accordingly).
 
 ## LattePanda setup
-Realsense camera (guest side):
+Realsense camera (guest side, a.k.a. LattePanda but outside docker):
 ```bash
 lattedrone=user@ip
 scp scripts/lattepanda_realsense_setup.sh $lattedrone:~
