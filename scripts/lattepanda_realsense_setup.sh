@@ -7,6 +7,7 @@ sed -i 's|, GROUP:="plugdev"||g' 99-realsense-libusb.rules
 sed -i 's|, GROUP="plugdev"||g' 99-realsense-libusb.rules
 
 sudo install -Dm 644 99-realsense-libusb.rules /etc/udev/rules.d/99-realsense-libusb.rules
+rm 99-realsense-libusb.rules
 
 read -p 'Refresh udev rules? Make sure that any Realsense camera is not attached (Y/n): ' choice
 if [ "$choice" != "n" ]; then
