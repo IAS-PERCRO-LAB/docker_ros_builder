@@ -112,7 +112,7 @@ image_tag="ros-${ros_distro}-base"
 
 # If it's a ROS1 distro
 if [[ " ${ROS1_DISTROS[@]} " =~ " ${ros_distro} " ]]; then
-    cd "${script_dir}/docker"
+    cd "${script_dir}/dockerfile-ros1"
 
     docker build ${build_options} \
         --build-arg ros_distro="${ros_distro}" \
