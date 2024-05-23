@@ -9,7 +9,7 @@ ROS1_DISTROS=(kinetic lunar melodic noetic)
 
 usage() {
     echo
-    echo "Usage: `basename $0` -d ros_distro -t target [-n username] [-u uid] [-g gid] [-q] [-e] [-w] [-h]"
+    echo "Usage: `basename $0` -d ros_distro -v version [-t target] [-n username] [-u uid] [-g gid] [-q] [-e] [-w] [-h]"
     echo
     echo "This script is two-fold:"
     echo "  1. It builds a ROS docker image of your desired distribution."
@@ -17,6 +17,7 @@ usage() {
     echo
     echo "Build arguments:"
     echo "  d   ROS distribution to work with. Either ROS1 (kinetic, lunar, melodic, noetic) or ROS2 (humble)."
+    echo "  v   Dockerfile version: base, or something more."
     echo "  u   UID (User ID) in the guest system. Default is yours (`id -u`)."
     echo "  g   GID (Group ID) in the guest system. Default is yours (`id -g`)."
     echo "  q   build docker image quietly."
@@ -32,10 +33,12 @@ usage() {
     echo
 }
 
+target=""
 # `getopts` ref: https://www.computerhope.com/unix/bash/getopts.htm
-while getopts ":d:t:n:u:g:qewh" arg; do
+while getopts ":d:v:t:n:u:g:qewh" arg; do
     case $arg in
         d) ros_distro="${OPTARG}";;
+        v) version="${OPTARG}";;
         u) uid="${OPTARG}";;
         g) gid="${OPTARG}";;
         q) quiet_build=true;;
@@ -46,7 +49,7 @@ while getopts ":d:t:n:u:g:qewh" arg; do
         w) mount_ros_ws=true;;
         s) allow_ssh=true;;
 
-        h)  echo "Builds a docker image to run ROS and deploys a basic setup to work with it."; usage; exit 0;;
+        h)  usage; exit 0;;
         \?) echo "Unknown option: -$OPTARG" >&2; usage; exit 1;;
         :)  echo "Missing option argument for -$OPTARG" >&2; usage; exit 1;;
     esac
@@ -56,13 +59,16 @@ done
 if [[ -z $ros_distro ]]; then
     echo 'Missing desired distribution (-d)' >&2; usage; exit 1
 fi
+if [[ -z $version ]]; then
+    echo 'Missing desired version (-v)' >&2; usage; exit 1
+fi
 
 if [[ ! " ${ROS1_DISTROS[@]} " =~ " ${ros_distro} " && ${ros_distro} != "humble" ]]; then
     echo "Invalid ROS distribution: ${ros_distro}" >&2; usage; exit 1
 fi
 
 # Deploy only if target is set
-deploy=[[ -z $target ]]
+deploy=$(test -n "$target" && echo true || echo false)
 
 # set optional arguments
 if [[ -z $guest_username ]]; then
@@ -107,14 +113,20 @@ if $deploy; then
 fi
 
 # build the docker image
-echo "Build the docker image... (This can take some time)"
-image_tag="ros-${ros_distro}-base"
+image_tag="ros-${ros_distro}-${version}"
+echo "Building docker image $image_tag (This can take some time)"
 
 # If it's a ROS1 distro
 if [[ " ${ROS1_DISTROS[@]} " =~ " ${ros_distro} " ]]; then
     cd "${script_dir}/dockerfile-ros1"
 
+    dockerfile_name="Dockerfile.${version}"
+    if [[ ! -f "${dockerfile_name}" ]]; then
+        echo "It does not seem to exist a Docker file for version ${version}. Check it again, please!" >&2; exit 1
+    fi
+
     docker build ${build_options} \
+        --dockerfile "${dockerfile_name}" \
         --build-arg ros_distro="${ros_distro}" \
         --build-arg username="${guest_username}" \
         --build-arg uid="${uid}" \
@@ -123,9 +135,11 @@ if [[ " ${ROS1_DISTROS[@]} " =~ " ${ros_distro} " ]]; then
         .
 
 else
+    echo "not implemented"
     # TODO: Humble build
 fi
 
+echo
 echo "Docker image built successfully! Tagged as ${image_tag}"
 
 if $deploy; then
@@ -147,9 +161,6 @@ if $deploy; then
     sudo rm -f "${target}/docker_id"
     docker ps -aqf "name=${container_name}" > "${target}/docker_id"
     chmod 444 "${target}/docker_id"
-
-    # That's it!
-    cd "${current_dir}"
 
     echo
     echo "Your dockerized ROS box is now ready in '${target}'."
