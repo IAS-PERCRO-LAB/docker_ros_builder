@@ -126,7 +126,7 @@ if [[ " ${ROS1_DISTROS[@]} " =~ " ${ros_distro} " ]]; then
     fi
 
     docker build ${build_options} \
-        --dockerfile "${dockerfile_name}" \
+        --file "${dockerfile_name}" \
         --build-arg ros_distro="${ros_distro}" \
         --build-arg username="${guest_username}" \
         --build-arg uid="${uid}" \

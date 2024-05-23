@@ -1,5 +1,5 @@
 ARG ros_distro
-FROM osrf/ros:${ros_distro}-desktop-full
+FROM ros:${ros_distro}-ros-base
 
 ARG ros_distro
 ARG username
@@ -9,7 +9,6 @@ ARG gid
 RUN apt update && \
 	DEBIAN_FRONTEND=noninteractive apt -yq upgrade && \
 	DEBIAN_FRONTEND=noninteractive apt -yq --allow-downgrades install \
-		x-window-system mesa-utils \
 		python3-catkin-tools python3-osrf-pycommon \
 		git vim tmux sudo dialog less && \
     DEBIAN_FRONTEND=noninteractive apt clean && \
