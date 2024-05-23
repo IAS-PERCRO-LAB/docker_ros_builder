@@ -41,5 +41,7 @@ RUN echo "source /opt/ros/${ros_distro}/setup.bash" >> /home/${username}/.bashrc
 
 RUN rosdep update
 
+WORKDIR /home/${username}/catkin_ws
+
 COPY rosbox_entrypoint.sh /rosbox_entrypoint.sh
 ENTRYPOINT /rosbox_entrypoint.sh

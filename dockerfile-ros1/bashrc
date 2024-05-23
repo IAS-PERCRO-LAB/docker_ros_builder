@@ -56,3 +56,5 @@ alias glog='git log --oneline --graph --decorate --all -5'
 alias gl='git log --oneline --all --graph --decorate'
 alias gpush='git push'
 alias gstat='git status'
+
+export ROS_IP=127.0.0.1
