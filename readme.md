@@ -1,25 +1,25 @@
-# ROS LatteDrone
-Create ROS image with:
-```bash
-./image_builder/init-ros-box.sh -d noetic -n percro -t ./ros_lattedrone -w -e
+# Docker ROS images builder
 
-# then copy source files inside the shared directory (needed to install dependencies)
-cp -r YOUR_SRC_PATH ./ros_lattedrone/ros_ws/src/.
+This repo has many different uses:
+1. Build a ROS image for either ROS 1 or 2
+2. Work with a persistent container with a mounted ROS workspace
+3. Upload the entire workspace to an edge device
+
+## How to use
+Create a ROS (either 1 or 2) image with:
+```bash
+# Just build the image
+./init-ros-box.sh -d noetic -n full-gpu
+
+# Build the image and deploy a container, using `ros_noetic` directory as your workspace
+./init-ros-box.sh -d noetic -n full-gpu -t ./ros_noetic
 ```
 
-Then, start the container with `go.sh`. Once inside:
+The deployed container can be started with `go.sh`. Once inside:
 ```bash
-~/init_catkin_ws.sh
+~/init_catkin_ws.sh # to install missing dependencies with rosdep and build your workspace
 ```
-Dependencies should be installed and the workspace should be compiled succesfully.
-Now you can use `./scripts/upload_ws.sh` to build and uploading your entire workspace to LattePanda (just remember to set `SOURCE_WS_PATH` accordingly).
 
-## LattePanda setup
-Realsense camera (guest side, a.k.a. LattePanda but outside docker):
-```bash
-lattedrone=user@ip
-scp scripts/lattepanda_realsense_setup.sh $lattedrone:~
+## Upload the entire workspace in some edge device
 
-ssh $lattedrone
-./lattepanda_realsense_setup.sh && rm lattepanda_realsense_setup.sh
-```
+Take a look at `./scripts/upload_ws.sh` to build and upload the workspace you've deployed anywhere with rsync (just remember to set `SOURCE_WS_PATH` accordingly).

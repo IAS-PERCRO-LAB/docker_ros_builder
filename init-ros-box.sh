@@ -33,6 +33,16 @@ usage() {
     echo
 }
 
+print_distros() {
+    echo
+    echo "ROS1 distributions: ${ROS1_DISTROS[@]}"
+    echo "ROS2 distributions: humble"
+    echo
+    echo "Example: `basename $0` -d noetic -v full-gpu -t ~/rosbox"
+    echo
+
+}
+
 target=""
 # `getopts` ref: https://www.computerhope.com/unix/bash/getopts.htm
 while getopts ":d:v:t:n:u:g:qewh" arg; do
@@ -64,7 +74,7 @@ if [[ -z $version ]]; then
 fi
 
 if [[ ! " ${ROS1_DISTROS[@]} " =~ " ${ros_distro} " && ${ros_distro} != "humble" ]]; then
-    echo "Invalid ROS distribution: ${ros_distro}" >&2; usage; exit 1
+    echo "Invalid ROS distribution: ${ros_distro}" >&2; usage; print_distros; exit 1
 fi
 
 # Deploy only if target is set
@@ -114,6 +124,8 @@ if $deploy; then
     # Detect Nvidia GPU presence
     if [[ -n `lspci | grep -i nvidia` ]]; then
         create_options+="--gpus all "
+        create_options+="-e NVIDIA_VISIBLE_DEVICES=all "
+        create_options+="-e NVIDIA_DRIVER_CAPABILITIES=all "
         echo "Nvidia GPU detected. Enabling GPU support."
     fi
 
@@ -133,7 +145,7 @@ if [[ " ${ROS1_DISTROS[@]} " =~ " ${ros_distro} " ]]; then
 
     dockerfile_name="Dockerfile.${version}"
     if [[ ! -f "${dockerfile_name}" ]]; then
-        echo "It does not seem to exist a Docker file for version ${version}. Check it again, please!" >&2; exit 1
+        echo "It does not seem to exist a Docker file for version ${version}. Check it again, please!" >&2; print_distros; exit 1
     fi
 
     docker build ${build_options} \
