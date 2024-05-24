@@ -9,7 +9,7 @@ cp -r YOUR_SRC_PATH ./ros_lattedrone/ros_ws/src/.
 
 Then, start the container with `go.sh`. Once inside:
 ```bash
-~/ros_container_setup.sh
+~/init_catkin_ws.sh
 ```
 Dependencies should be installed and the workspace should be compiled succesfully.
 Now you can use `./scripts/upload_ws.sh` to build and uploading your entire workspace to LattePanda (just remember to set `SOURCE_WS_PATH` accordingly).

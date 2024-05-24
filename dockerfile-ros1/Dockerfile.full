@@ -32,8 +32,8 @@ COPY bashrc /home/${username}/.bashrc
 COPY bashrc /root/.bashrc
 COPY bash_profile /home/${username}/.bash_profile
 COPY bash_profile /root/.bash_profile
-COPY ros_container_setup.sh /home/${username}/ros_container_setup.sh
-RUN chown ${username}:${username} /home/${username}/.bash* /home/${username}/ros_container_setup.sh
+COPY init_catkin_ws.sh /home/${username}/init_catkin_ws.sh
+RUN chown ${username}:${username} /home/${username}/.bash* /home/${username}/init_catkin_ws.sh
 USER ${username}
 ENV HOME /home/${username}
 RUN echo "source /opt/ros/${ros_distro}/setup.bash" >> /home/${username}/.bashrc && \
