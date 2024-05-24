@@ -85,31 +85,42 @@ if ${quiet_build:-false}; then
 fi
 
 if $deploy; then
-    if ${xserver_bindings:-true}; then
-        create_options="--env='DISPLAY' -v /tmp/.X11-unix:/tmp/.X11-unix:rw "
-    fi
-    if ${mount_ros_ws:-false}; then
-        host_ros_dir="${target}/ros_ws"
-        create_options="${create_options}-v ${host_ros_dir}:/home/${guest_username}/catkin_ws"
-    else
-        host_ros_dir="${target}/src"
-        create_options="${create_options}-v ${host_ros_dir}:/home/${guest_username}/catkin_ws/src"
-    fi
-    if ${allow_ssh:-false}; then
-        create_options="${create_options} --cap-add sys_ptrace -p 127.0.0.1:2200:22"
-    else
-        create_options="${create_options} --network host"
-    fi
+    mkdir -p "$current_dir/$target"
 
     # convert target to an absolute path
     target=$( cd "${target}" ; pwd -P )
 
+    create_options="--privileged "
+    create_options="--user=${guest_username} "
+    create_options+="-e TERM=xterm-256color "
+    create_options+="-v /dev:/dev "
+
+    if ${xserver_bindings:-true}; then
+        create_options="-e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:rw "
+    fi
+    if ${mount_ros_ws:-false}; then
+        host_ros_dir="${target}/ros_ws"
+        create_options+="-v ${host_ros_dir}:/home/${guest_username}/catkin_ws "
+    else
+        host_ros_dir="${target}/src"
+        create_options+="-v ${host_ros_dir}:/home/${guest_username}/catkin_ws/src "
+    fi
+    if ${allow_ssh:-false}; then
+        create_options+="--cap-add sys_ptrace -p 127.0.0.1:2200:22 "
+    else
+        create_options+="--network host "
+    fi
+
+    # Detect Nvidia GPU presence
+    if [[ -n `lspci | grep -i nvidia` ]]; then
+        create_options+="--gpus all "
+        echo "Nvidia GPU detected. Enabling GPU support."
+    fi
+
     # copy target files
     echo "Prepare the target environment..."
     cp -R "${script_dir}/target/"* "${target}/"
-    if [[ ! -d "${host_ros_dir}" ]]; then
-        mkdir "${host_ros_dir}"
-    fi
+    mkdir -p "${host_ros_dir}"
 fi
 
 # build the docker image
@@ -143,7 +154,8 @@ echo
 echo "Docker image built successfully! Tagged as ${image_tag}"
 
 if $deploy; then
-    container_name="${image_tag}-container"
+    container_name=$(basename ${target} | sed 's/[^a-zA-Z0-9]/-/g')
+    echo "Deploying ${container_name}..."
 
     echo "remove old container (if present)..."
     docker container stop ${container_name} > /dev/null 2>&1 || true
@@ -152,9 +164,6 @@ if $deploy; then
     echo "create a new container from this image..."
     cd "${target}"
     docker create ${create_options} \
-        -v /dev:/dev \
-        --privileged \
-        --user=${guest_username} \
         --name "${container_name}" \
         -it ${image_tag}
 
