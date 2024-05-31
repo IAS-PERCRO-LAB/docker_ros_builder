@@ -101,10 +101,16 @@ if $deploy; then
     target=$( cd "${target}" ; pwd -P )
 
     create_options="--privileged "
+    create_options+="--memory 4000M "
     create_options+="-v /dev:/dev "
     create_options+="--user=${guest_username} "
     create_options+="-e TERM=xterm-256color "
     create_options+="-v /etc/localtime:/etc/localtime:ro "
+    create_options+="-v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket "
+
+    # rosout bugfix in Archlinux
+    # Ref: https://answers.ros.org/question/336963/rosout-high-memory-usage/
+    create_options+="--ulimit nofile=1024:524288 "
 
     if ${xserver_bindings:-true}; then
         create_options+="-e DISPLAY=$DISPLAY "
@@ -122,13 +128,16 @@ if $deploy; then
         create_options+="--cap-add sys_ptrace -p 127.0.0.1:2200:22 "
     else
         create_options+="--network host "
+        create_options+="--ipc host "
+        create_options+="--pid host "
     fi
 
     # Detect Nvidia GPU presence
     if [[ -n `lspci | grep -i nvidia` ]]; then
         create_options+="--gpus all "
         # create_options+="--runtime=nvidia "  # alternative of the above
-        create_options+="-e NVIDIA_VISIBLE_DEVICES=all "
+        # TODO: get NVIDIA_VISIBLE_DEVICES
+        create_options+="-e NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all} "
         create_options+="-e NVIDIA_DRIVER_CAPABILITIES=all "
         create_options+="-e __NV_PRIME_RENDER_OFFLOAD=1 "
         create_options+="-e __GLX_VENDOR_LIBRARY_NAME=nvidia "
