@@ -101,12 +101,15 @@ if $deploy; then
     target=$( cd "${target}" ; pwd -P )
 
     create_options="--privileged "
-    create_options="--user=${guest_username} "
-    create_options+="-e TERM=xterm-256color "
     create_options+="-v /dev:/dev "
+    create_options+="--user=${guest_username} "
+    create_options+="-e TERM=xterm-256color "
+    create_options+="-v /etc/localtime:/etc/localtime:ro "
 
     if ${xserver_bindings:-true}; then
-        create_options="-e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:rw "
+        create_options+="-e DISPLAY=$DISPLAY "
+        create_options+="-e QT_X11_NO_MITSHM=1 "
+        create_options+="-v /tmp/.X11-unix:/tmp/.X11-unix:rw "
     fi
     if ${mount_ros_ws:-false}; then
         host_ros_dir="${target}/ros_ws"
@@ -124,8 +127,11 @@ if $deploy; then
     # Detect Nvidia GPU presence
     if [[ -n `lspci | grep -i nvidia` ]]; then
         create_options+="--gpus all "
+        # create_options+="--runtime=nvidia "  # alternative of the above
         create_options+="-e NVIDIA_VISIBLE_DEVICES=all "
         create_options+="-e NVIDIA_DRIVER_CAPABILITIES=all "
+        create_options+="-e __NV_PRIME_RENDER_OFFLOAD=1 "
+        create_options+="-e __GLX_VENDOR_LIBRARY_NAME=nvidia "
         echo "Nvidia GPU detected. Enabling GPU support."
     fi
 
