@@ -8,12 +8,12 @@ This repo has many different uses:
 ## Supported images
 
 Currently, you can target against:
-[x] any ROS1 distribution (e.g. Noetic)
-    [x] base: no-GUI, base packages
-    [x] full: GUI with RViz and Gazebo, based on the `base` image
-    [x] full-gpu: GUI with RViz and Gazebo with GPU support, based on `full` image
-    [x] full-cudagl: (deprecated!) GUI with RViz and Gazebo with GPU support, based on official `nvidia/cudagl` image
-[ ] any ROS2 distribution (e.g. Foxy)
+- [x] any ROS1 distribution (e.g. Noetic)
+    - [x] base: no-GUI, base packages, based on official `ros:${ros_distro}-ros-base` image
+    - [x] full: GUI with RViz and Gazebo, based on official `osrf/ros:${ros_distro}-desktop-full` image
+    - [x] full-gpu: GUI with RViz and Gazebo with GPU support, based on `full` image
+    - [x] full-cudagl: (deprecated!) GUI with RViz and Gazebo with GPU support, based on official `nvidia/cudagl` image
+- [ ] any ROS2 distribution (e.g. Foxy)
 
 ## How to use
 Create a ROS (either 1 or 2) image with:
@@ -38,6 +38,7 @@ The deployed container can be started with `go.sh`. Once inside:
 Take a look at `./scripts/upload_ws.sh` to build and upload the workspace you've deployed anywhere with rsync (just remember to set `SOURCE_WS_PATH` accordingly).
 
 ## ToDos
-[ ] Add support for more ROS2 distributions
-[ ] Add support for more edge devices (cross compile with buildx)
-[ ] Resolve internal image depedencies automatically when building
+- [ ] Add support for more ROS2 distributions
+- [ ] Add support for more edge devices (cross compile with buildx)
+- [ ] Rebase ROS1 `full` image on top of `base`
+- [ ] Resolve internal image depedencies automatically when building
