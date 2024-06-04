@@ -101,7 +101,8 @@ if $deploy; then
     target=$( cd "${target}" ; pwd -P )
 
     create_options="--privileged "
-    create_options+="--memory 4000M "
+    # limit memory usage to 80% of host's total memory
+    create_options+="--memory $(( $(grep MemTotal /proc/meminfo | awk '{print $2}') * 8 / 10 /1024 ))M "
     create_options+="-v /dev:/dev "
     create_options+="--user=${guest_username} "
     create_options+="-e TERM=xterm-256color "
