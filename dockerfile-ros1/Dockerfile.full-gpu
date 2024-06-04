@@ -1,135 +1,42 @@
-FROM nvidia/cudagl:11.4.2-base-ubuntu20.04
-# FROM ubuntu:focal # official osrf images
-
 ARG ros_distro
+FROM ros-${ros_distro}-full
+
 ARG username
-ARG uid
-ARG gid
 
+# --------------------- nvidia/cudagl:11.4.2-base-ubuntu20.04 ---------------------
+# https://gitlab.com/nvidia/container-images/cuda/-/blob/edb0fcb4f81663e99b2221d98cf60809820f719e/dist/11.4.2/ubuntu2004/base/Dockerfile
 
-# --------------------- osrf/ros:noetic-ros-core ---------------------
-# https://github.com/osrf/docker_images/blob/master/ros/noetic/ubuntu/focal/ros-core/Dockerfile
+ENV NVARCH x86_64
+ENV NVIDIA_REQUIRE_CUDA "cuda>=11.4 brand=tesla,driver>=418,driver<419 brand=tesla,driver>=440,driver<441 brand=tesla,driver>=450,driver<451 brand=tesla,driver>=460,driver<461"
+ENV NV_CUDA_CUDART_VERSION 11.4.108-1
+ENV NV_CUDA_COMPAT_PACKAGE cuda-compat-11-4
+ENV CUDA_VERSION 11.4.2
 
-# setup timezone
-RUN echo 'Etc/UTC' > /etc/timezone && \
-    ln -s /usr/share/zoneinfo/Etc/UTC /etc/localtime && \
-    apt-get update && \
-    apt-get install -q -y --no-install-recommends tzdata && \
+USER root
+
+RUN sudo apt update && sudo apt install -y --no-install-recommends \
+    gnupg2 curl ca-certificates && \
+    curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/${NVARCH}/3bf863cc.pub | apt-key add - && \
+    echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/${NVARCH} /" > /etc/apt/sources.list.d/cuda.list && \
+    sudo apt purge --autoremove -y curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# For libraries in the cuda-compat-* package: https://docs.nvidia.com/cuda/eula/index.html#attachment-a
+RUN sudo apt update && sudo apt install -y --no-install-recommends \
+    cuda-cudart-11-4=${NV_CUDA_CUDART_VERSION} \
+    ${NV_CUDA_COMPAT_PACKAGE} \
+    && ln -s cuda-11.4 /usr/local/cuda && \
     rm -rf /var/lib/apt/lists/*
 
-# install packages
-RUN apt-get update && apt-get install -q -y --no-install-recommends \
-    dirmngr \
-    gnupg2 \
-    && rm -rf /var/lib/apt/lists/*
+# Required for nvidia-docker v1
+RUN echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf \
+    && echo "/usr/local/nvidia/lib64" >> /etc/ld.so.conf.d/nvidia.conf
 
-# setup keys
-RUN set -eux; \
-       key='C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654'; \
-       export GNUPGHOME="$(mktemp -d)"; \
-       gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key"; \
-       mkdir -p /usr/share/keyrings; \
-       gpg --batch --export "$key" > /usr/share/keyrings/ros1-latest-archive-keyring.gpg; \
-       gpgconf --kill all; \
-       rm -rf "$GNUPGHOME"
+ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
 
-# setup sources.list
-RUN echo "deb [ signed-by=/usr/share/keyrings/ros1-latest-archive-keyring.gpg ] http://packages.ros.org/ros/ubuntu focal main" > /etc/apt/sources.list.d/ros1-latest.list
+# nvidia-container-runtime
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
 
-# setup environment
-ENV LANG C.UTF-8
-ENV LC_ALL C.UTF-8
-
-ENV ROS_DISTRO ${ros_distro}
-
-# install ros packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ros-${ros_distro}-ros-core=1.5.0-1* \
-    && rm -rf /var/lib/apt/lists/*
-
-# setup entrypoint
-COPY ./rosbox_entrypoint.sh /
-
-ENTRYPOINT ["/rosbox_entrypoint.sh"]
-CMD ["bash"]
-
-# --------------------- osrf/ros:noetic-ros-base ---------------------
-# https://github.com/osrf/docker_images/blob/master/ros/noetic/ubuntu/focal/ros-base/Dockerfile
-
-# install bootstrap tools
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    build-essential \
-    python3-rosdep \
-    python3-rosinstall \
-    python3-vcstools \
-    && rm -rf /var/lib/apt/lists/*
-
-# bootstrap rosdep
-RUN rosdep init && \
-  rosdep update --rosdistro $ROS_DISTRO
-
-# install ros packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ros-${ros_distro}-ros-base=1.5.0-1* \
-    && rm -rf /var/lib/apt/lists/*
-
-# --------------------- osrf/ros:noetic-robot ---------------------
-# https://github.com/osrf/docker_images/blob/master/ros/noetic/ubuntu/focal/robot/Dockerfile
-
-# install ros packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ros-${ros_distro}-robot=1.5.0-1* \
-    && rm -rf /var/lib/apt/lists/*
-
-# --------------------- osrf/ros:noetic-desktop ---------------------
-# https://github.com/osrf/docker_images/blob/master/ros/noetic/ubuntu/focal/desktop/Dockerfile
-
-# install ros packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ros-${ros_distro}-desktop=1.5.0-1* \
-    && rm -rf /var/lib/apt/lists/*
-
-# --------------------- osrf/ros:noetic-desktop-full ---------------------
-# https://github.com/osrf/docker_images/blob/master/ros/noetic/ubuntu/focal/desktop-full/Dockerfile
-
-# install ros packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ros-${ros_distro}-desktop-full=1.5.0-1* \
-    && rm -rf /var/lib/apt/lists/*
-
-# --------------------- Our customisations ---------------------
-
-RUN apt update && \
-	DEBIAN_FRONTEND=noninteractive apt -yq upgrade && \
-	DEBIAN_FRONTEND=noninteractive apt -yq --allow-downgrades install \
-		python3-catkin-tools python3-osrf-pycommon \
-		git vim tmux sudo dialog less && \
-    DEBIAN_FRONTEND=noninteractive apt clean && \
-	rm -rf /var/lib/apt/lists/*
-
-# An alternative, if catkin-tools does not work
-# pip install -U "git+https://github.com/catkin/catkin_tools.git#egg=catkin_tools"
-
-RUN mkdir -p /home/${username}/catkin_ws/src && \
-    echo "${username}:x:${uid}:${gid}:Developer,,,:/home/${username}:/bin/bash" >> /etc/passwd && \
-    echo "${username}:\$6\$EikgdMS033suRSOQ\$MlQ0Z8iVq6.9x81X0Ffhz5Me..beIO94MurFT3DC.tEtQkQCe.3tz1DAEJdm/vQPLFMVkd1pFlzVAeVys8PTS.:18946::::::" >> /etc/shadow && \
-    echo "${username}:x:${uid}:" >> /etc/group && \
-    echo "${username} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${username} && \
-    chmod 0440 /etc/sudoers.d/${username} && \
-    chown ${uid}:${gid} -R /home/${username} && \
-    ssh-keygen -A
-
-COPY bashrc /home/${username}/.bashrc
-COPY bashrc /root/.bashrc
-COPY bash_profile /home/${username}/.bash_profile
-COPY bash_profile /root/.bash_profile
-COPY init_catkin_ws.sh /home/${username}/init_catkin_ws.sh
-RUN chown ${username}:${username} /home/${username}/.bash* /home/${username}/init_catkin_ws.sh
 USER ${username}
-ENV HOME /home/${username}
-RUN echo "source /opt/ros/${ros_distro}/setup.bash" >> /home/${username}/.bashrc && \
-    echo "source ~/catkin_ws/devel/setup.bash" >> /home/${username}/.bashrc
-
-RUN rosdep update
-
-WORKDIR /home/${username}/catkin_ws
