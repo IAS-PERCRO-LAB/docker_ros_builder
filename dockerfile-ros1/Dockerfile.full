@@ -51,6 +51,3 @@ ENV HOME /home/${username}
 RUN rosdep update --rosdistro=${ros_distro}
 
 WORKDIR /home/${username}/catkin_ws
-
-COPY rosbox_entrypoint.sh /rosbox_entrypoint.sh
-ENTRYPOINT /rosbox_entrypoint.sh

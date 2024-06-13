@@ -54,7 +54,3 @@ ENV HOME /home/${username}
 RUN rosdep update --rosdistro=${ros_distro}
 
 WORKDIR /home/${username}/catkin_ws
-
-# FIXME: Currently useless, and note that the entrypoint is not run when attaching to a running container
-COPY rosbox_entrypoint.sh /rosbox_entrypoint.sh
-ENTRYPOINT /rosbox_entrypoint.sh
