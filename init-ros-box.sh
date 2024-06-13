@@ -6,6 +6,7 @@ current_dir=`pwd -P`
 script_dir="$( cd "$(dirname "$0")" ; pwd -P )"
 
 ROS1_DISTROS=(kinetic lunar melodic noetic)
+ROS2_DISTROS=(humble)
 
 usage() {
     echo
@@ -21,6 +22,7 @@ usage() {
     echo "  u   UID (User ID) in the guest system. Default is yours (`id -u`)."
     echo "  g   GID (Group ID) in the guest system. Default is yours (`id -g`)."
     echo "  q   build docker image quietly."
+    echo "  c   make a clean build, by invalidating the Docker cache."
     echo
     echo "Deploy arguments:"
     echo "  t   target directory to deploy the basic setup. If omitted, there will be no deploy."
@@ -36,7 +38,7 @@ usage() {
 print_distros() {
     echo
     echo "ROS1 distributions: ${ROS1_DISTROS[@]}"
-    echo "ROS2 distributions: humble"
+    echo "ROS2 distributions: ${ROS2_DISTROS[@]}"
     echo
     echo "Example: `basename $0` -d noetic -v full-gpu -t ~/rosbox"
     echo
@@ -77,7 +79,7 @@ if [[ -z $version ]]; then
     echo 'Missing desired version (-v)' >&2; usage; exit 1
 fi
 
-if [[ ! " ${ROS1_DISTROS[@]} " =~ " ${ros_distro} " && ${ros_distro} != "humble" ]]; then
+if [[ ! " ${ROS1_DISTROS[@]} " =~ " ${ros_distro} " && ! " ${ROS2_DISTROS[@]} " =~ " ${ros_distro} " ]]; then
     echo "Invalid ROS distribution: ${ros_distro}" >&2; usage; print_distros; exit 1
 fi
 
@@ -162,25 +164,26 @@ echo "Building docker image $image_tag (This can take some time)"
 # If it's a ROS1 distro
 if [[ " ${ROS1_DISTROS[@]} " =~ " ${ros_distro} " ]]; then
     cd "${script_dir}/dockerfile-ros1"
-
-    dockerfile_name="Dockerfile.${version}"
-    if [[ ! -f "${dockerfile_name}" ]]; then
-        echo "It does not seem to exist a Docker file for version ${version}. Check it again, please!" >&2; print_distros; exit 1
-    fi
-
-    docker build ${build_options} \
-        --file "${dockerfile_name}" \
-        --build-arg ros_distro="${ros_distro}" \
-        --build-arg username="${guest_username}" \
-        --build-arg uid="${uid}" \
-        --build-arg gid="${gid}" \
-        -t ${image_tag} \
-        .
-
+elif [[ " ${ROS2_DISTROS[@]} " =~ " ${ros_distro} " ]]; then
+    cd "${script_dir}/ros2"
 else
-    echo "not implemented"
-    # TODO: Humble build
+    echo "Invalid ROS distribution: ${ros_distro}" >&2; usage; print_distros; exit 1
 fi
+
+dockerfile_name="Dockerfile.${version}"
+if [[ ! -f "${dockerfile_name}" ]]; then
+    echo "It does not seem to exist a Docker file for version ${version}. Check it again, please!" >&2; print_distros; exit 1
+    # TODO: print allowed versions too
+fi
+
+docker build ${build_options} \
+    --file "${dockerfile_name}" \
+    --build-arg ros_distro="${ros_distro}" \
+    --build-arg username="${guest_username}" \
+    --build-arg uid="${uid}" \
+    --build-arg gid="${gid}" \
+    -t "${image_tag}" \
+    .
 
 echo
 echo "Docker image built successfully! Tagged as ${image_tag}"

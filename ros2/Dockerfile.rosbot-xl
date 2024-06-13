@@ -1,0 +1,143 @@
+ARG ros_distro
+FROM ros-${ros_distro}-robot-opencv
+
+ARG ros_distro
+ARG username
+ARG WS_DEPS=/home/${username}/ws_deps
+
+# --------------------- MicroROS ---------------------
+# TODO: verify that it is actually needed from source and not just with apt
+
+# MicroROS
+RUN sudo apt update && \
+    DEBIAN_FRONTEND=noninteractive sudo apt install -y curl && \
+    . /opt/ros/${ros_distro}/setup.sh && \
+    cd ${WS_DEPS}/src && \
+    git clone -b ${ros_distro} https://github.com/micro-ROS/micro_ros_setup.git && \
+    cd .. && \
+    rosdep update --rosdistro=${ros_distro} && \
+    rosdep install --from-paths src/micro_ros_setup --ignore-src -r -y && \
+    colcon build --packages-select micro_ros_setup \
+        --packages-skip-build-finished --event-handler console_direct+ \
+        --cmake-args -DCMAKE_BUILD_TYPE=Release && \
+    . ./install/local_setup.sh && \
+    ros2 run micro_ros_setup create_agent_ws.sh && \
+    ros2 run micro_ros_setup build_agent.sh && \
+    DEBIAN_FRONTEND=noninteractive sudo apt clean && \
+    sudo rm -rf /var/lib/apt/lists/*
+
+# Micro XRCE-DDS
+# TODO: build in an intermediate Docker stage and just install the `build` directory
+RUN cd ~ && git clone https://github.com/eProsima/Micro-XRCE-DDS-Agent.git && \
+    cd Micro-XRCE-DDS-Agent && \
+    mkdir build && cd build && \
+    cmake .. && \
+    make -j $(nproc) && \
+    sudo make install
+
+# ##################### MicroROS #####################
+
+# --------------------- RosbotXL dependencies ---------------------
+
+USER root
+
+RUN apt update && \
+    DEBIAN_FRONTEND=noninteractive apt install -y \
+        libignition-gazebo6-dev \
+        libignition-plugin-dev \
+        ros-${ros_distro}-controller-manager \
+        ros-${ros_distro}-controller-interface \
+        ros-${ros_distro}-xacro \
+        ros-${ros_distro}-joint-state-broadcaster \
+        ros-${ros_distro}-imu-sensor-broadcaster \
+        ros-${ros_distro}-diff-drive-controller \
+        ros-${ros_distro}-laser-filters \
+        ros-${ros_distro}-robot-localization \
+        ros-${ros_distro}-hardware-interface \
+        ros-${ros_distro}-realtime-tools \
+        ros-${ros_distro}-control-msgs \
+        ros-${ros_distro}-effort-controllers \
+        ros-${ros_distro}-joint-trajectory-controller \
+        ros-${ros_distro}-ros-ign-gazebo \
+        ros-${ros_distro}-ros2controlcli \
+        ros-${ros_distro}-velocity-controllers \
+        ros-${ros_distro}-tricycle-controller \
+        ros-${ros_distro}-ros-gz-sim \
+        ros-${ros_distro}-ros-gz-bridge \
+        ros-${ros_distro}-teleop-twist-keyboard \
+        ros-${ros_distro}-slam-toolbox \
+        ros-${ros_distro}-navigation2 ros-${ros_distro}-nav2-bringup ros-${ros_distro}-nav2-rviz-plugins \
+        ros-${ros_distro}-image-transport \
+        ros-${ros_distro}-image-transport-plugins \
+        ros-${ros_distro}-image-tools \
+        ros-${ros_distro}-rqt-image-view && \
+    DEBIAN_FRONTEND=noninteractive apt clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# extra packages TODO: to be removed
+RUN apt update && \
+    DEBIAN_FRONTEND=noninteractive apt install -y \
+        rsync inotify-tools sshpass \
+        terminator ranger \
+        ros-${ros_distro}-plotjuggler-ros \
+        ros-${ros_distro}-rqt-tf-tree \
+        lm-sensors && \
+    DEBIAN_FRONTEND=noninteractive apt clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# # Sounds
+# RUN apt install -y sox libsox-fmt-all alsa-utils && \
+#     pip install pygame
+
+# # For Dual Shock Controller (PS4)
+# # https://github.com/chrippa/ds4drv/issues/172
+# # https://github.com/chrippa/ds4drv#permissions (udev)
+# RUN DEBIAN_FRONTEND=noninteractive apt install -y \
+#     ros-${ros_distro}-joy ros-${ros_distro}-teleop-twist-joy
+
+USER ${username}
+
+# SLAMTEC LIDAR ROS2 Package (https://github.com/husarion/rplidar-docker/blob/ros2/Dockerfile)
+RUN sudo apt update && \
+    cd ${WS_DEPS}/src && \
+    git clone https://github.com/husarion/sllidar_ros2.git sllidar_ros2 -b main && \
+    . /opt/ros/${ros_distro}/setup.sh && \
+    cd .. && rosdep update --rosdistro=${ros_distro} && \
+    rosdep install --from-paths src --ignore-src -y && \
+    colcon build --symlink-install --event-handler console_direct+ --parallel-workers $(nproc) --packages-skip-build-finished && \
+    DEBIAN_FRONTEND=noninteractive sudo apt clean && \
+    sudo rm -rf /var/lib/apt/lists/*
+
+# TCP tunnel for ROS2
+RUN . /opt/ros/${ros_distro}/setup.sh && \
+    cd ${WS_DEPS}/src && \
+    git clone https://github.com/norlab-ulaval/ros2_tcp_tunnel.git -b ${ros_distro} && \
+    cd .. && \
+    colcon build --symlink-install --event-handler console_direct+ --parallel-workers $(nproc) --packages-skip-build-finished
+
+# ##################### RosbotXL dependencies #####################
+
+############################
+## Create ROS2 workspaces ##
+############################
+
+# TODO: rename workspaces
+ARG ROS2_WS=ros2_ws/ws
+ARG MY_ROS2_WS=my_ros2_ws
+
+# Create workspaces
+RUN mkdir -p /home/${username}/${ROS2_WS}/src && \
+    cd /home/${username}/${ROS2_WS}/src
+
+# Create other workspaces
+RUN mkdir -p /home/${username}/${MY_ROS2_WS}/src && \
+    cd /home/${username}/${MY_ROS2_WS} && \
+    colcon build --symlink-install
+
+RUN echo "source /home/${username}/${ROS2_WS}/install/local_setup.bash" >> ~/.bashrc && \
+    echo "source /home/${username}/${MY_ROS2_WS}/install/local_setup.bash" >> ~/.bashrc
+
+# COPY ./dot_files/tmux.conf /home/${USERNAME}/.tmux.conf
+# COPY ./dot_files/fun_bash.sh /home/${USERNAME}/.fun_bash.sh
+
+WORKDIR /home/nuctella/my_ros2_ws/src/core/startup

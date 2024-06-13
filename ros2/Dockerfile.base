@@ -1,0 +1,57 @@
+ARG ros_distro
+FROM ros:${ros_distro}-ros-base
+
+ARG ros_distro
+ARG username
+ARG uid
+ARG gid
+
+# --------------------- base setup ---------------------
+# Install devel tools, fastrtps and cyclonedds
+# DEBIAN_FRONTEND=noninteractive apt -yq upgrade && \
+
+
+RUN apt update && \
+	DEBIAN_FRONTEND=noninteractive apt -yq --allow-downgrades install \
+        ros-dev-tools ros-${ros_distro}-topic-tools libnss3 python3-pip \
+        ros-${ros_distro}-rmw-fastrtps-cpp \
+        ros-${ros_distro}-rmw-cyclonedds-cpp \
+        lsb-release htop tmuxinator \
+        tzdata git vim tmux sudo dialog less && \
+    DEBIAN_FRONTEND=noninteractive apt clean && \
+	rm -rf /var/lib/apt/lists/*
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+ENV TZ Europe/Rome
+
+# ##################### base setup #####################
+
+# --------------------- user configuration ---------------------
+
+RUN mkdir -p /home/${username}/ws/src && \
+    echo "${username}:x:${uid}:${gid}:Developer,,,:/home/${username}:/bin/bash" >> /etc/passwd && \
+    echo "${username}:\$6\$EikgdMS033suRSOQ\$MlQ0Z8iVq6.9x81X0Ffhz5Me..beIO94MurFT3DC.tEtQkQCe.3tz1DAEJdm/vQPLFMVkd1pFlzVAeVys8PTS.:18946::::::" >> /etc/shadow && \
+    echo "${username}:x:${uid}:" >> /etc/group && \
+    echo "${username} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${username} && \
+    chmod 0440 /etc/sudoers.d/${username} && \
+    chown ${uid}:${gid} -R /home/${username} && \
+    ssh-keygen -A
+
+COPY bashrc /home/${username}/.bashrc
+COPY bashrc /root/.bashrc
+COPY init_ws.sh /home/${username}/init_ws.sh
+RUN echo '[[ -f ~/.bashrc ]] && . ~/.bashrc' > /home/${username}/.bash_profile && \
+    cp /home/${username}/.bash_profile /root/.bash_profile && \
+    chown ${username}:${username} /home/${username}/.bash* /home/${username}/init_ws.sh
+
+RUN echo "source /opt/ros/${ros_distro}/setup.bash" >> /home/${username}/.bashrc && \
+    echo "source ~/ws/devel/local_setup.bash" >> /home/${username}/.bashrc
+
+USER ${username}
+ENV PATH "$PATH:/usr/local/bin"
+ENV HOME /home/${username}
+WORKDIR /home/${username}
+
+# ##################### user configuration #####################
+
+RUN rosdep update --rosdistro=${ros_distro}

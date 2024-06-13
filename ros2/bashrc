@@ -1,0 +1,68 @@
+#
+# ~/.bashrc
+#
+
+# If not running interactively, don't do anything
+[[ $- != *i* ]] && return
+
+alias ls='ls --color=auto'
+alias ll='ls -l'
+alias rm='rm -i'
+alias mv='mv -i'
+alias cp='cp -i'
+alias grep='grep --color=auto'
+export EDITOR='vim'
+export LESS="-iMSx4 -FX -SR"
+alias less="less ${LESS}"
+export PAGER="less ${LESS}"
+export QT_X11_NO_MITSHM=1
+
+function returncode
+{
+  returncode=$?
+  if [ $returncode != 0 ]; then
+    echo "[$returncode]"
+  else
+    echo ""
+  fi
+}
+
+# check if the current directory has git active, if so prompt current branch name
+parse_git_branch() {
+git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1) /'
+}
+
+if [[ ${EUID} == 0 ]]
+then # root user
+	PS1="\[\033[01;31m\]\u\[\e[38;5;245m\]@ROS-DOCKER \W \$(parse_git_branch)\$\[\e[0;97m\] "
+else # non-root user
+	PS1="\[\033[01;33m\]\u\[\e[38;5;245m\]@ROS-DOCKER \W \$(parse_git_branch)\$\[\e[0;97m\] "
+fi
+
+export BUILDDIR=/tmp
+export MAKEFLAGS="-j$(nproc) $MAKEFLAGS"
+export LD_LIBRARY_PATH="/usr/lib:$LD_LIBRARY_PATH"
+
+alias inst='sudo apt install'
+alias search='sudo apt search'
+alias remove='sudo apt remove'
+alias clean='sudo apt-get clean'
+alias up='sudo apt update'
+alias upp='sudo apt update && sudo apt upgrade'
+
+alias gadd='git add'
+alias gcom='git commit'
+alias glog='git log --oneline --graph --decorate --all -5'
+alias gl='git log --oneline --all --graph --decorate'
+alias gpush='git push'
+alias gstat='git status'
+
+# alias nvidia="__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia"
+
+# ROS aliases
+# alias colbu='. /opt/ros/${ros_distro}/setup.bash && colcon build --symlink-install --event-handler console_direct+'"
+alias colbu="colcon build --symlink-install --event-handler console_direct+"
+alias colcl="rm -rf build/ install/ log/"
+
+source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash
+source /usr/share/colcon_cd/function/colcon_cd.sh
