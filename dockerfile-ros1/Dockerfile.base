@@ -6,16 +6,26 @@ ARG username
 ARG uid
 ARG gid
 
+# --------------------- base setup ---------------------
+
 RUN apt update && \
 	DEBIAN_FRONTEND=noninteractive apt -yq upgrade && \
 	DEBIAN_FRONTEND=noninteractive apt -yq --allow-downgrades install \
 		python3-catkin-tools python3-osrf-pycommon \
-		git vim tmux sudo dialog less && \
+        tzdata git vim tmux sudo dialog less && \
     DEBIAN_FRONTEND=noninteractive apt clean && \
-	rm -rf /var/lib/apt/lists/*
+	rm -rf /var/lib/apt/lists/* && \
+    rm /ros_entrypoint.sh
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+ENV TZ Europe/Rome
 
 # An alternative, if catkin-tools does not work
 # pip install -U "git+https://github.com/catkin/catkin_tools.git#egg=catkin_tools"
+
+# ##################### base setup #####################
+
+# --------------------- user configuration ---------------------
 
 RUN mkdir -p /home/${username}/catkin_ws/src && \
     echo "${username}:x:${uid}:${gid}:Developer,,,:/home/${username}:/bin/bash" >> /etc/passwd && \
@@ -24,8 +34,7 @@ RUN mkdir -p /home/${username}/catkin_ws/src && \
     echo "${username} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${username} && \
     chmod 0440 /etc/sudoers.d/${username} && \
     chown ${uid}:${gid} -R /home/${username} && \
-    ssh-keygen -A && \
-    rm /ros_entrypoint.sh
+    ssh-keygen -A
 
 COPY bashrc /home/${username}/.bashrc
 COPY bashrc /root/.bashrc
@@ -33,14 +42,19 @@ COPY bash_profile /home/${username}/.bash_profile
 COPY bash_profile /root/.bash_profile
 COPY init_catkin_ws.sh /home/${username}/init_catkin_ws.sh
 RUN chown ${username}:${username} /home/${username}/.bash* /home/${username}/init_catkin_ws.sh
-USER ${username}
-ENV HOME /home/${username}
+
 RUN echo "source /opt/ros/${ros_distro}/setup.bash" >> /home/${username}/.bashrc && \
     echo "source ~/catkin_ws/devel/setup.bash" >> /home/${username}/.bashrc
 
-RUN rosdep update
+USER ${username}
+ENV HOME /home/${username}
+
+# ##################### user configuration #####################
+
+RUN rosdep update --rosdistro=${ros_distro}
 
 WORKDIR /home/${username}/catkin_ws
 
+# FIXME: Currently useless, and note that the entrypoint is not run when attaching to a running container
 COPY rosbox_entrypoint.sh /rosbox_entrypoint.sh
 ENTRYPOINT /rosbox_entrypoint.sh

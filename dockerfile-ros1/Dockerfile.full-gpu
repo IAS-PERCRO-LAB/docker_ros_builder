@@ -3,6 +3,8 @@ FROM ros-${ros_distro}-full
 
 ARG username
 
+USER root
+
 # --------------------- nvidia/cudagl:11.4.2-base-ubuntu20.04 ---------------------
 # https://gitlab.com/nvidia/container-images/cuda/-/blob/edb0fcb4f81663e99b2221d98cf60809820f719e/dist/11.4.2/ubuntu2004/base/Dockerfile
 
@@ -12,17 +14,15 @@ ENV NV_CUDA_CUDART_VERSION 11.4.108-1
 ENV NV_CUDA_COMPAT_PACKAGE cuda-compat-11-4
 ENV CUDA_VERSION 11.4.2
 
-USER root
-
-RUN sudo apt update && sudo apt install -y --no-install-recommends \
+RUN apt update && apt install -y --no-install-recommends \
     gnupg2 curl ca-certificates && \
     curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/${NVARCH}/3bf863cc.pub | apt-key add - && \
     echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/${NVARCH} /" > /etc/apt/sources.list.d/cuda.list && \
-    sudo apt purge --autoremove -y curl \
+    apt purge --autoremove -y curl \
     && rm -rf /var/lib/apt/lists/*
 
 # For libraries in the cuda-compat-* package: https://docs.nvidia.com/cuda/eula/index.html#attachment-a
-RUN sudo apt update && sudo apt install -y --no-install-recommends \
+RUN apt update && apt install -y --no-install-recommends \
     cuda-cudart-11-4=${NV_CUDA_CUDART_VERSION} \
     ${NV_CUDA_COMPAT_PACKAGE} \
     && ln -s cuda-11.4 /usr/local/cuda && \
@@ -38,5 +38,7 @@ ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
 # nvidia-container-runtime
 ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
+
+# ##################### nvidia/cudagl:11.4.2-base-ubuntu20.04 #####################
 
 USER ${username}

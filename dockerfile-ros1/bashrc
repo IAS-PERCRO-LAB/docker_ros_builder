@@ -43,7 +43,7 @@ export BUILDDIR=/tmp
 export MAKEFLAGS="-j$(nproc) $MAKEFLAGS"
 export LD_LIBRARY_PATH="/usr/lib:$LD_LIBRARY_PATH"
 
-alias install='sudo apt install'
+alias inst='sudo apt install'
 alias search='sudo apt search'
 alias remove='sudo apt remove'
 alias clean='sudo apt-get clean'
@@ -57,4 +57,5 @@ alias gl='git log --oneline --all --graph --decorate'
 alias gpush='git push'
 alias gstat='git status'
 
+# ROS aliases
 export ROS_IP=127.0.0.1

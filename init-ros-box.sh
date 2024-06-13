@@ -44,14 +44,18 @@ print_distros() {
 }
 
 target=""
+build_options=""
+# build_options+="--pull "
+
 # `getopts` ref: https://www.computerhope.com/unix/bash/getopts.htm
-while getopts ":d:v:t:n:u:g:qewh" arg; do
+while getopts ":d:v:t:n:u:g:qcewh" arg; do
     case $arg in
         d) ros_distro="${OPTARG}";;
         v) version="${OPTARG}";;
         u) uid="${OPTARG}";;
         g) gid="${OPTARG}";;
         q) quiet_build=true;;
+        c) build_options+="--no-cache ";;
 
         t) target="${OPTARG}";;
         n) guest_username="${OPTARG}";;
@@ -91,7 +95,7 @@ if [[ -z $gid ]]; then
     gid=`id -g`
 fi
 if ${quiet_build:-false}; then
-    build_options="--quiet"
+    build_options+="--quiet"
 fi
 
 if $deploy; then
