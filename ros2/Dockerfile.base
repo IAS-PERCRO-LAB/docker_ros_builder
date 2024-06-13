@@ -6,6 +6,8 @@ ARG username
 ARG uid
 ARG gid
 
+ENV CONTAINER_NAME=${ros_distro}-base
+
 # --------------------- base setup ---------------------
 # Install devel tools, fastrtps and cyclonedds
 # DEBIAN_FRONTEND=noninteractive apt -yq upgrade && \

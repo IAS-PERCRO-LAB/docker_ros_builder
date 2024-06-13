@@ -3,6 +3,8 @@ FROM ros-${ros_distro}-full
 
 ARG username
 
+ENV CONTAINER_NAME=${ros_distro}-full-gpu
+
 USER root
 
 # --------------------- nvidia/cudagl:11.4.2-base-ubuntu20.04 ---------------------

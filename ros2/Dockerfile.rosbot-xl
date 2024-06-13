@@ -5,6 +5,8 @@ ARG ros_distro
 ARG username
 ARG WS_DEPS=/home/${username}/ws_deps
 
+ENV CONTAINER_NAME=${ros_distro}-rosbot-xl
+
 # --------------------- MicroROS ---------------------
 # TODO: verify that it is actually needed from source and not just with apt
 

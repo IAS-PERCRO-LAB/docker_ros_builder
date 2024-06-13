@@ -26,7 +26,7 @@ usage() {
     echo
     echo "Deploy arguments:"
     echo "  t   target directory to deploy the basic setup. If omitted, there will be no deploy."
-    echo "  n   username in the guest system. Default is yours (`whoami`)."
+    echo "  n   username in the guest system. Default is 'docker'."
     echo "  e   create headless container (no x-server bindings)."
     echo "  w   mount an entire ROS workspace instead of just the src directory."
     echo "  s   allow ssh connections (port 22)."
@@ -88,7 +88,8 @@ deploy=$(test -n "$target" && echo true || echo false)
 
 # set optional arguments
 if [[ -z $guest_username ]]; then
-    guest_username=$USER
+    # guest_username=$USER # with this, the default is yours
+    guest_username="docker"
 fi
 if [[ -z $uid ]]; then
     uid=`id -u`

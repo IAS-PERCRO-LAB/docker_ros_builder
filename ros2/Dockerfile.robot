@@ -5,6 +5,7 @@ ARG ros_distro
 ARG username
 ARG WS_DEPS=/home/${username}/ws_deps
 
+ENV CONTAINER_NAME=${ros_distro}-robot
 
 # --------------------- FastRTPS and CycloneDDS ---------------------
 

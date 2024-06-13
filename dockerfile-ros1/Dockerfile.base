@@ -6,6 +6,8 @@ ARG username
 ARG uid
 ARG gid
 
+ENV CONTAINER_NAME=${ros_distro}-base
+
 # --------------------- base setup ---------------------
 
 RUN apt update && \
