@@ -20,12 +20,12 @@ Create a ROS (either 1 or 2) image with:
 ```bash
 # Just build the image
 # NOTE: you have to manually build any dependent image, e.g. if you want full-gpu:
-./init-ros-box.sh -d noetic -n base
-./init-ros-box.sh -d noetic -n full # depends on 'base'
-./init-ros-box.sh -d noetic -n full-gpu # depends on 'full'
+./init-ros-box.sh -d noetic -v base
+./init-ros-box.sh -d noetic -v full # depends on 'base'
+./init-ros-box.sh -d noetic -v full-gpu # depends on 'full'
 
 # Build the image and deploy a container, using `ros_noetic` directory as your workspace
-./init-ros-box.sh -d noetic -n full-gpu -t ./ros_noetic
+./init-ros-box.sh -d noetic -v full-gpu -t ./ros_noetic
 ```
 
 The deployed container can be started with `go.sh`. Once inside:
